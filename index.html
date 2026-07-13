@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Print Tracker - Manufacturing & Inventory Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons for premium modern look -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation (Desktop) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <i data-lucide="box"></i>
+                    </div>
+                    <span>ARTO#3D</span>
+                </div>
+                <div id="sync-badge" class="sync-badge local">
+                    <span class="dot"></span>
+                    <span class="badge-text">Offline Mode</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="#dashboard" class="nav-item active" data-tab="dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#materials" class="nav-item" data-tab="materials">
+                    <i data-lucide="layers"></i>
+                    <span>Materials</span>
+                </a>
+                <a href="#products" class="nav-item" data-tab="products">
+                    <i data-lucide="package"></i>
+                    <span>Products</span>
+                </a>
+                <a href="#manufacturing" class="nav-item" data-tab="manufacturing">
+                    <i data-lucide="printer"></i>
+                    <span>Manufacturing</span>
+                </a>
+                <a href="#sales" class="nav-item" data-tab="sales">
+                    <i data-lucide="shopping-cart"></i>
+                    <span>Sales</span>
+                </a>
+                <a href="#settings" class="nav-item" data-tab="settings">
+                    <i data-lucide="settings"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <p class="store-name">Father's Store Sync</p>
+                <p class="copyright">&copy; 2026 PrintSync</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header for Mobile / Notifications -->
+            <header class="app-header">
+                <div class="mobile-logo">
+                    <div class="logo-icon">
+                        <i data-lucide="box"></i>
+                    </div>
+                    <span>PrintSync</span>
+                </div>
+                <h1 id="page-title">Dashboard</h1>
+                <div id="header-sync-badge" class="sync-badge local mobile-only">
+                    <span class="dot"></span>
+                    <span class="badge-text">Offline</span>
+                </div>
+            </header>
+
+            <!-- Scrollable Content -->
+            <div class="content-body">
+                
+                <!-- DASHBOARD VIEW -->
+                <section id="dashboard-view" class="tab-view active">
+                    <!-- KPI Grid -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card total-sales-card">
+                            <div class="kpi-info">
+                                <span class="kpi-label">Total Revenue</span>
+                                <h3 id="kpi-revenue" class="kpi-value">$0.00</h3>
+                                <span class="kpi-subtext" id="kpi-sales-count">0 items sold</span>
+                            </div>
+                            <div class="kpi-icon-wrapper">
+                                <i data-lucide="trending-up"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-card total-cost-card">
+                            <div class="kpi-info">
+                                <span class="kpi-label">Manufacturing Cost</span>
+                                <h3 id="kpi-cost" class="kpi-value">$0.00</h3>
+                                <span class="kpi-subtext" id="kpi-cost-breakdown">Incl. failures & labor</span>
+                            </div>
+                            <div class="kpi-icon-wrapper">
+                                <i data-lucide="activity"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-card net-profit-card">
+                            <div class="kpi-info">
+                                <span class="kpi-label">Net Profit</span>
+                                <h3 id="kpi-profit" class="kpi-value">$0.00</h3>
+                                <span class="kpi-subtext" id="kpi-profit-margin">0% margin</span>
+                            </div>
+                            <div class="kpi-icon-wrapper">
+                                <i data-lucide="dollar-sign"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-card stock-level-card">
+                            <div class="kpi-info">
+                                <span class="kpi-label">Active Stock</span>
+                                <h3 id="kpi-stock" class="kpi-value">0</h3>
+                                <span class="kpi-subtext" id="kpi-items-types">0 unique products</span>
+                            </div>
+                            <div class="kpi-icon-wrapper">
+                                <i data-lucide="package"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Report Card -->
+                    <div class="card monthly-report-card">
+                        <div class="card-header">
+                            <h3>Monthly Report</h3>
+                            <select id="dashboard-month-select" class="month-select" onchange="changeDashboardMonth(this.value)"></select>
+                        </div>
+                        <div class="card-body">
+                            <div class="month-stats-row">
+                                <div class="month-stat">
+                                    <span class="kpi-label">Revenue</span>
+                                    <h3 id="month-kpi-revenue" class="kpi-value">$0.00</h3>
+                                </div>
+                                <div class="month-stat">
+                                    <span class="kpi-label">Cost of Goods Sold</span>
+                                    <h3 id="month-kpi-cost" class="kpi-value">$0.00</h3>
+                                </div>
+                                <div class="month-stat">
+                                    <span class="kpi-label">Net Profit</span>
+                                    <h3 id="month-kpi-profit" class="kpi-value">$0.00</h3>
+                                    <span class="kpi-subtext" id="month-kpi-margin">0% margin</span>
+                                </div>
+                                <div class="month-stat">
+                                    <span class="kpi-label">Items Sold</span>
+                                    <h3 id="month-kpi-items" class="kpi-value">0</h3>
+                                </div>
+                            </div>
+
+                            <h4 class="monthly-subheading">What Sold This Month</h4>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Qty Sold</th>
+                                            <th>Revenue</th>
+                                            <th>Profit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthly-sales-body">
+                                        <tr>
+                                            <td colspan="4" class="table-empty">No sales logged for this month.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts & Inventory Alert Grid -->
+                    <div class="dashboard-grid">
+                        <!-- Chart Card -->
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <h3>Financial Performance</h3>
+                                <div class="chart-legend">
+                                    <span class="legend-item"><span class="legend-dot revenue"></span>Revenue</span>
+                                    <span class="legend-item"><span class="legend-dot cost"></span>Cost</span>
+                                </div>
+                            </div>
+                            <div class="card-body chart-body" id="financial-chart-container">
+                                <!-- SVG Bar Chart injected here by JS -->
+                                <svg id="financial-chart" width="100%" height="220" viewBox="0 0 500 220" preserveAspectRatio="none">
+                                    <!-- Dynamic SVG Content -->
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Alerts / Low Stock Card -->
+                        <div class="card alerts-card">
+                            <div class="card-header">
+                                <h3>Inventory & Alerts</h3>
+                                <span class="badge warning" id="low-stock-count">0 warnings</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert-list" id="low-stock-list">
+                                    <div class="empty-state">
+                                        <i data-lucide="check-circle" class="success-icon"></i>
+                                        <p>All stock levels healthy!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Logs Summary -->
+                    <div class="dashboard-grid second-row">
+                        <div class="card mini-list-card">
+                            <div class="card-header">
+                                <h3>Recent Manufacturing</h3>
+                                <button class="btn btn-text" onclick="switchTab('manufacturing')">View All</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="mini-list" id="mini-manufactured-list">
+                                    <div class="empty-state">No prints logged yet.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mini-list-card">
+                            <div class="card-header">
+                                <h3>Recent Sales</h3>
+                                <button class="btn btn-text" onclick="switchTab('sales')">View All</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="mini-list" id="mini-sales-list">
+                                    <div class="empty-state">No sales logged yet.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- MATERIALS VIEW -->
+                <section id="materials-view" class="tab-view">
+                    <div class="view-header">
+                        <div class="view-description">
+                            <h2>Filament Spools & Materials</h2>
+                            <p>Track your filament inventory, spool weights, costs, and calculate exact per-gram material pricing.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('material-modal')">
+                            <i data-lucide="plus"></i> Add Material
+                        </button>
+                    </div>
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Type</label>
+                            <select id="materials-filter-type" onchange="filters.materials.type = this.value; renderMaterials();">
+                                <option value="all">All Types</option>
+                                <option value="PLA">PLA</option>
+                                <option value="PETG">PETG</option>
+                                <option value="ABS">ABS</option>
+                                <option value="ASA">ASA</option>
+                                <option value="TPU">TPU</option>
+                                <option value="Nylon">Nylon</option>
+                                <option value="Wood">Wood Fill</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="filter-group filter-search">
+                            <label>Search</label>
+                            <input type="text" id="materials-filter-search" placeholder="Search brand or color..." oninput="filters.materials.search = this.value; renderMaterials();">
+                        </div>
+                    </div>
+                    <div class="materials-grid" id="materials-list">
+                        <!-- Dynamic Material Cards -->
+                        <div class="empty-state">
+                            <i data-lucide="layers" class="empty-icon"></i>
+                            <p>No materials added yet. Add your first spool to begin calculating print costs.</p>
+                            <button class="btn btn-secondary mt-3" onclick="openModal('material-modal')">Add Material</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PRODUCTS VIEW -->
+                <section id="products-view" class="tab-view">
+                    <div class="view-header">
+                        <div class="view-description">
+                            <h2>Product Catalog</h2>
+                            <p>Define product designs. Input print parameters like print times, filament weights, labor, and failure margins to estimate unit costs and profit margins.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('product-modal')">
+                            <i data-lucide="plus"></i> Add Product
+                        </button>
+                    </div>
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Stock</label>
+                            <select id="products-filter-stock" onchange="filters.products.stock = this.value; renderProducts();">
+                                <option value="all">All Stock</option>
+                                <option value="in-stock">In Stock</option>
+                                <option value="low-stock">Low Stock</option>
+                                <option value="out-of-stock">Out of Stock</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Material</label>
+                            <select id="products-filter-material" onchange="filters.products.material = this.value; renderProducts();">
+                                <option value="all">All Materials</option>
+                            </select>
+                        </div>
+                        <div class="filter-group filter-search">
+                            <label>Search</label>
+                            <input type="text" id="products-filter-search" placeholder="Search name or code..." oninput="filters.products.search = this.value; renderProducts();">
+                        </div>
+                    </div>
+                    <div class="products-grid" id="products-list">
+                        <!-- Dynamic Product Cards -->
+                        <div class="empty-state">
+                            <i data-lucide="package" class="empty-icon"></i>
+                            <p>No products in your catalog yet. Create a product and configure its manufacturing metrics.</p>
+                            <button class="btn btn-secondary mt-3" onclick="openModal('product-modal')">Add Product</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- MANUFACTURING LOG VIEW -->
+                <section id="manufacturing-view" class="tab-view">
+                    <div class="view-header">
+                        <div class="view-description">
+                            <h2>Manufacturing Logs</h2>
+                            <p>Log prints completed. Successful runs add to product inventory. Failed runs track wasted filament, electricity, and time costs.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('manufacture-modal')">
+                            <i data-lucide="printer"></i> Log Print Run
+                        </button>
+                    </div>
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="mfg-filter-status" onchange="filters.manufacturing.status = this.value; renderManufacturingLog();">
+                                <option value="all">All Statuses</option>
+                                <option value="Success">Success</option>
+                                <option value="Failed">Failed</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Product</label>
+                            <select id="mfg-filter-product" onchange="filters.manufacturing.product = this.value; renderManufacturingLog();">
+                                <option value="all">All Products</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Month</label>
+                            <select id="mfg-filter-month" onchange="filters.manufacturing.month = this.value; renderManufacturingLog();">
+                                <option value="all">All Time</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Status</th>
+                                    <th>Filament Wasted/Used</th>
+                                    <th>Est. Cost</th>
+                                    <th>Notes</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manufacture-log-body">
+                                <tr>
+                                    <td colspan="8" class="table-empty">No print logs available. Start printing!</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- SALES TRACKER VIEW -->
+                <section id="sales-view" class="tab-view">
+                    <div class="view-header">
+                        <div class="view-description">
+                            <h2>Sales & Store Tracker</h2>
+                            <p>Record transactions when items sell in your father's store or online. Automatically reduces product stock and tracks revenue.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('sale-modal')">
+                            <i data-lucide="dollar-sign"></i> Log Sale
+                        </button>
+                    </div>
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Channel</label>
+                            <select id="sales-filter-channel" onchange="filters.sales.channel = this.value; renderSalesLog();">
+                                <option value="all">All Channels</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Product</label>
+                            <select id="sales-filter-product" onchange="filters.sales.product = this.value; renderSalesLog();">
+                                <option value="all">All Products</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Month</label>
+                            <select id="sales-filter-month" onchange="filters.sales.month = this.value; renderSalesLog();">
+                                <option value="all">All Time</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Product</th>
+                                    <th>Qty</th>
+                                    <th>Unit Price</th>
+                                    <th>Total Revenue</th>
+                                    <th>Total Profit</th>
+                                    <th>Channel / Notes</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sales-log-body">
+                                <tr>
+                                    <td colspan="8" class="table-empty">No sales logged yet. Start selling!</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- SETTINGS VIEW -->
+                <section id="settings-view" class="tab-view">
+                    <div class="settings-grid">
+                        <!-- Firebase Configurations -->
+                        <div class="card firebase-config-card">
+                            <div class="card-header border-bottom">
+                                <div class="header-title">
+                                    <i data-lucide="cloud" class="icon-accent"></i>
+                                    <h3>Firebase Cloud Sync</h3>
+                                </div>
+                                <span id="sync-status-indicator" class="badge danger">Not Connected</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="description">Connect a Firebase Firestore project to synchronize costs, catalog, and sales live between you, your father, and your brother on multiple devices.</p>
+                                <form id="firebase-config-form">
+                                    <div class="form-group">
+                                        <label for="fb-config-json">Firebase Config JSON Object</label>
+                                        <textarea id="fb-config-json" rows="8" placeholder='{&#10;  "apiKey": "AIzaSy...",&#10;  "authDomain": "...",&#10;  "projectId": "...",&#10;  "storageBucket": "...",&#10;  "messagingSenderId": "...",&#10;  "appId": "..."&#10;}'></textarea>
+                                        <span class="input-hint">Paste the configuration object from your Firebase Console.</span>
+                                    </div>
+                                    <div class="settings-actions">
+                                        <button type="submit" class="btn btn-primary" id="btn-save-firebase">Save & Connect</button>
+                                        <button type="button" class="btn btn-outline" id="btn-disconnect-firebase" style="display:none;">Disconnect Cloud</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Data Management & Backups -->
+                        <div class="card backup-card">
+                            <div class="card-header border-bottom">
+                                <div class="header-title">
+                                    <i data-lucide="database" class="icon-accent"></i>
+                                    <h3>Data Management</h3>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="description">Backup your tracking database or migrate data between platforms. Highly recommended to perform periodic backups.</p>
+                                <div class="action-buttons-list">
+                                    <div class="backup-action">
+                                        <div>
+                                            <h4>Export Local Database</h4>
+                                            <p>Download a JSON file containing all materials, products, prints, and sales.</p>
+                                        </div>
+                                        <button class="btn btn-secondary" onclick="exportData()">
+                                            <i data-lucide="download"></i> Export Data
+                                        </button>
+                                    </div>
+                                    <div class="backup-action">
+                                        <div>
+                                            <h4>Import Backup File</h4>
+                                            <p>Upload a previously exported JSON backup. This overrides current data.</p>
+                                        </div>
+                                        <div>
+                                            <input type="file" id="import-file-input" style="display: none;" onchange="importData(event)">
+                                            <button class="btn btn-secondary" onclick="document.getElementById('import-file-input').click()">
+                                                <i data-lucide="upload"></i> Import Data
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="backup-action danger-zone">
+                                        <div>
+                                            <h4>Reset All Data</h4>
+                                            <p>Wipe all materials, catalog, sales, and manufacturing records. This is permanent.</p>
+                                        </div>
+                                        <button class="btn btn-danger" onclick="confirmResetAll()">
+                                            <i data-lucide="trash-2"></i> Wipe Database
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation (Mobile Only) -->
+        <nav class="bottom-nav">
+            <a href="#dashboard" class="bottom-nav-item active" data-tab="dashboard">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dash</span>
+            </a>
+            <a href="#materials" class="bottom-nav-item" data-tab="materials">
+                <i data-lucide="layers"></i>
+                <span>Spools</span>
+            </a>
+            <a href="#products" class="bottom-nav-item" data-tab="products">
+                <i data-lucide="package"></i>
+                <span>Catalog</span>
+            </a>
+            <a href="#manufacturing" class="bottom-nav-item" data-tab="manufacturing">
+                <i data-lucide="printer"></i>
+                <span>Prints</span>
+            </a>
+            <a href="#sales" class="bottom-nav-item" data-tab="sales">
+                <i data-lucide="shopping-cart"></i>
+                <span>Sales</span>
+            </a>
+            <a href="#settings" class="bottom-nav-item" data-tab="settings">
+                <i data-lucide="settings"></i>
+                <span>Setup</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- MODAL DIALOGS -->
+
+    <!-- 1. ADD/EDIT MATERIAL MODAL -->
+    <div id="material-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="material-modal-title">Add Filament Spool</h3>
+                <button class="close-btn" onclick="closeModal('material-modal')">&times;</button>
+            </div>
+            <form id="material-form">
+                <input type="hidden" id="material-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mat-brand">Brand / Manufacturer*</label>
+                        <input type="text" id="mat-brand" placeholder="e.g. Hatchbox, Overture" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mat-type">Material Type*</label>
+                        <select id="mat-type" required>
+                            <option value="PLA">PLA</option>
+                            <option value="PETG">PETG</option>
+                            <option value="ABS">ABS</option>
+                            <option value="ASA">ASA</option>
+                            <option value="TPU">TPU</option>
+                            <option value="Nylon">Nylon</option>
+                            <option value="Wood">Wood Fill</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mat-color">Color Name*</label>
+                        <input type="text" id="mat-color" placeholder="e.g. Matte Black, Silk Gold" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mat-color-hex">Color Preview Accent</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="mat-color-hex" value="#a855f7">
+                            <span class="color-hex-text">#a855f7</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mat-weight">Spool Net Weight (grams)*</label>
+                        <input type="number" id="mat-weight" min="1" value="1000" placeholder="e.g. 1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mat-cost">Spool Purchase Price ($)*</label>
+                        <input type="number" id="mat-cost" min="0" step="0.01" placeholder="e.g. 19.99" required>
+                    </div>
+                </div>
+                <div class="cost-calculation-info">
+                    <p>Estimated Material Cost: <strong id="calculated-cost-gram">$0.000/g</strong></p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('material-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Material</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. ADD/EDIT PRODUCT MODAL -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="product-modal-title">Define Product Design</h3>
+                <button class="close-btn" onclick="closeModal('product-modal')">&times;</button>
+            </div>
+            <form id="product-form">
+                <input type="hidden" id="product-id">
+                <div class="modal-scroll-body">
+                    
+                    <div class="section-title">Product Details</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="prod-code">Product Code* (Unique Key)</label>
+                            <input type="text" id="prod-code" placeholder="e.g. DRG-001" required style="text-transform: uppercase;">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-name">Product Name*</label>
+                            <input type="text" id="prod-name" placeholder="e.g. Flexi Rex, Honeycomb Coaster" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="prod-target-price">Target Selling Price ($)*</label>
+                            <input type="number" id="prod-target-price" min="0" step="0.01" placeholder="e.g. 15.00" required>
+                        </div>
+                        <div class="form-group">
+                            <!-- Spacer for layout alignment -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-desc">Description / Notes</label>
+                        <textarea id="prod-desc" rows="2" placeholder="Describe the item, printer settings, or packaging details..."></textarea>
+                    </div>
+
+                    <!-- Material parameters -->
+                    <div class="section-title">3D Print Configuration</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="prod-material-id">Primary Material (Filament)*</label>
+                            <select id="prod-material-id" required>
+                                <option value="" disabled selected>Select a material spool</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-weight">Filament Weight Used (grams)*</label>
+                            <input type="number" id="prod-weight" min="1" placeholder="e.g. 85" required>
+                            <span class="input-hint">Include supports/brims weight.</span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="prod-print-time">Print Time (Hours)*</label>
+                            <input type="number" id="prod-print-time" min="0.1" step="0.1" placeholder="e.g. 4.5" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-failure-rate">Failure Margin (%)</label>
+                            <input type="number" id="prod-failure-rate" min="0" max="100" value="10" placeholder="e.g. 10">
+                            <span class="input-hint">Extra cost added to absorb failed prints.</span>
+                        </div>
+                    </div>
+
+                    <!-- Labor, Electricity, Hardware -->
+                    <div class="section-title">Additional Production Costs (Optional)</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="prod-labor-time">Labor / Post-Processing Time (Hours)</label>
+                            <input type="number" id="prod-labor-time" min="0" step="0.05" value="0.2" placeholder="e.g. 0.2">
+                            <span class="input-hint">Sanding, assembly, packing time.</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-labor-rate">Labor Hourly Rate ($/hr)</label>
+                            <input type="number" id="prod-labor-rate" min="0" step="0.5" value="15.00" placeholder="e.g. 15.00">
+                            <span class="input-hint">How much you value your time.</span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="prod-electricity-rate">Electricity Rate ($/hour)</label>
+                            <input type="number" id="prod-electricity-rate" min="0" step="0.01" value="1.00" placeholder="e.g. 1.00">
+                            <span class="input-hint">Flat cost per hour of print time (default: $1/hour).</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-hardware-cost">Extra Hardware & Packaging Cost ($)</label>
+                        <input type="number" id="prod-hardware-cost" min="0" step="0.01" value="0.00" placeholder="e.g. magnets, screws, bags">
+                        <span class="input-hint">Cost of parts not printed (magnets, retail bags).</span>
+                    </div>
+
+                    <!-- Cost Live Calculator Box -->
+                    <div class="cost-summary-box">
+                        <div class="cost-sum-row">
+                            <span>Material Cost:</span>
+                            <span id="sum-material-cost">$0.00</span>
+                        </div>
+                        <div class="cost-sum-row">
+                            <span>Electricity Cost:</span>
+                            <span id="sum-electricity-cost">$0.00</span>
+                        </div>
+                        <div class="cost-sum-row">
+                            <span>Labor Cost:</span>
+                            <span id="sum-labor-cost">$0.00</span>
+                        </div>
+                        <div class="cost-sum-row">
+                            <span>Failure Cushion:</span>
+                            <span id="sum-failure-cost">$0.00</span>
+                        </div>
+                        <div class="cost-sum-row highlight">
+                            <span>Total Unit Mfg Cost:</span>
+                            <span id="sum-total-cost">$0.00</span>
+                        </div>
+                        <div class="cost-sum-row highlight profit">
+                            <span>Net Profit @ Target Price:</span>
+                            <span id="sum-net-profit">$0.00 (<span id="sum-profit-percent">0%</span>)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('product-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. LOG MANUFACTURING RUN MODAL -->
+    <div id="manufacture-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Log Manufacturing Print</h3>
+                <button class="close-btn" onclick="closeModal('manufacture-modal')">&times;</button>
+            </div>
+            <form id="manufacture-form">
+                <div class="form-group">
+                    <label for="mfg-product-id">Product Design Printed*</label>
+                    <select id="mfg-product-id" required>
+                        <option value="" disabled selected>Select a product to print</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mfg-qty">Quantity Attempted*</label>
+                        <input type="number" id="mfg-qty" min="1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mfg-status">Print Run Status*</label>
+                        <select id="mfg-status" required>
+                            <option value="Success">Success (Adds to inventory)</option>
+                            <option value="Failed">Failed (Wasted material, no stock added)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="mfg-date">Date Completed*</label>
+                    <input type="date" id="mfg-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="mfg-notes">Notes / Issues</label>
+                    <input type="text" id="mfg-notes" placeholder="e.g. Bed adhesion failure, print quality issue">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('manufacture-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Log Print Run</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. LOG SALE MODAL -->
+    <div id="sale-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Log Product Sale</h3>
+                <button class="close-btn" onclick="closeModal('sale-modal')">&times;</button>
+            </div>
+            <form id="sale-form">
+                <div class="form-group">
+                    <label for="sale-product-id">Product Sold*</label>
+                    <select id="sale-product-id" required>
+                        <option value="" disabled selected>Select product sold</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sale-qty">Quantity Sold*</label>
+                        <input type="number" id="sale-qty" min="1" value="1" required>
+                        <span id="sale-stock-warning" class="input-hint text-warning"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="sale-price">Actual Unit Selling Price ($)*</label>
+                        <input type="number" id="sale-price" min="0" step="0.01" required>
+                        <span class="input-hint">Autofills from catalog target price.</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sale-date">Date Sold*</label>
+                    <input type="date" id="sale-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="sale-channel">Sales Channel / Notes</label>
+                    <input type="text" id="sale-channel" placeholder="e.g. Father's Store, Etsy, Cash sale">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('sale-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Log Sale</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase Script Loader -->
+    <!-- We load Firebase client SDK from CDN using script tags -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- Main JavaScript App Code -->
+    <script src="app.js"></script>
+</body>
+</html>

@@ -13,7 +13,23 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="app-container">
+    <!-- LOGIN SCREEN (shown until user signs in with an approved account) -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-card">
+            <div class="logo-icon" style="width:56px;height:56px;margin:0 auto 20px;">
+                <i data-lucide="box"></i>
+            </div>
+            <h2>PrintSync</h2>
+            <p class="login-subtext">Sign in to access the shared dashboard.</p>
+            <button id="login-btn" class="btn btn-primary login-google-btn">
+                <i data-lucide="log-in"></i>
+                Sign in with Google
+            </button>
+            <p id="login-error" class="login-error"></p>
+        </div>
+    </div>
+
+    <div class="app-container" id="app-container" style="display:none;">
         <!-- Sidebar Navigation (Desktop) -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -56,7 +72,11 @@
             </nav>
             <div class="sidebar-footer">
                 <p class="store-name">Father's Store Sync</p>
-                <p class="copyright">&copy; 2026 PrintSync</p>
+                <p id="current-user-email" class="copyright"></p>
+                <button id="logout-btn" class="btn btn-secondary logout-btn">
+                    <i data-lucide="log-out"></i>
+                    Sign out
+                </button>
             </div>
         </aside>
 
@@ -815,6 +835,7 @@
     <!-- We load Firebase client SDK from CDN using script tags -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <!-- Main JavaScript App Code -->
     <script src="app.js"></script>

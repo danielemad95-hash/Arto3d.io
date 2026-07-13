@@ -29,6 +29,17 @@ const DEFAULT_FIREBASE_CONFIG = {
     measurementId: "G-7HCWD3FVK5"
 };
 
+// --- AUTHENTICATION ---
+// Only these Google accounts may sign in. Add/remove emails as needed.
+const ALLOWED_EMAILS = [
+    "danielemad95@gmail.com",
+    "emadbaki@gmail.com",
+    "michael.emadsb@gmail.com"
+];
+
+let auth = null;
+let currentUser = null;
+
 // --- DATA ACCESS LAYER (LocalStorage & Firebase Firestore Wrapper) ---
 let isFirebaseConnected = false;
 let db = null;
@@ -43,8 +54,12 @@ const STORAGE_KEYS = {
     FIREBASE_CONFIG: 'printsync_fb_config'
 };
 
-// Initialize Application Data
-async function initApp() {
+// Initialize Application Data (only called after a successful, allowed sign-in)
+let appStarted = false;
+async function startApp() {
+    if (appStarted) return;
+    appStarted = true;
+
     loadLocalSettings();
 
     // Prefer a config the user manually saved in Settings (if any),
@@ -1933,7 +1948,60 @@ async function confirmResetAll() {
 }
 
 
+// --- AUTHENTICATION FLOW ---
+function initAuth() {
+    // Firebase App must be initialized before Auth can be used.
+    // We use the same config as Firestore so there's only one Firebase project.
+    if (!firebase.apps.length) {
+        firebase.initializeApp(DEFAULT_FIREBASE_CONFIG);
+    }
+
+    auth = firebase.auth();
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    const loginScreen = document.getElementById('login-screen');
+    const appContainer = document.getElementById('app-container');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const loginError = document.getElementById('login-error');
+    const userEmailEl = document.getElementById('current-user-email');
+
+    loginBtn.addEventListener('click', () => {
+        loginError.textContent = '';
+        auth.signInWithPopup(provider).catch((error) => {
+            console.error('Sign-in error:', error);
+            loginError.textContent = 'Sign-in failed: ' + error.message;
+        });
+    });
+
+    logoutBtn.addEventListener('click', () => {
+        auth.signOut();
+    });
+
+    auth.onAuthStateChanged((user) => {
+        if (user && ALLOWED_EMAILS.includes(user.email)) {
+            // Approved user
+            currentUser = user;
+            loginScreen.style.display = 'none';
+            appContainer.style.display = '';
+            userEmailEl.textContent = user.email;
+            startApp();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        } else if (user) {
+            // Signed in with Google, but not on the allowlist
+            loginError.textContent = `${user.email} is not authorized to use this app.`;
+            auth.signOut();
+        } else {
+            // Signed out / not yet signed in
+            currentUser = null;
+            loginScreen.style.display = 'flex';
+            appContainer.style.display = 'none';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    });
+}
+
 // --- START APPLICATION ---
 window.addEventListener('DOMContentLoaded', () => {
-    initApp();
+    initAuth();
 });

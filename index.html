@@ -658,17 +658,18 @@
 
                     <!-- Material parameters -->
                     <div class="section-title">3D Print Configuration</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="prod-material-id">Primary Material (Filament)*</label>
-                            <select id="prod-material-id" required>
-                                <option value="" disabled selected>Select a material spool</option>
-                            </select>
+                    <div class="form-group">
+                        <label>Filaments Used*</label>
+                        <span class="input-hint">Add every spool used in this print (multi-color / multi-material prints) and the grams each one contributes, including supports/brims.</span>
+                        <div id="prod-filaments-list" class="filaments-list">
+                            <!-- Filament rows injected by JS -->
                         </div>
-                        <div class="form-group">
-                            <label for="prod-weight">Filament Weight Used (grams)*</label>
-                            <input type="number" id="prod-weight" min="1" placeholder="e.g. 85" required>
-                            <span class="input-hint">Include supports/brims weight.</span>
+                        <button type="button" id="add-filament-btn" class="btn btn-secondary btn-add-filament" onclick="addFilamentRow()">
+                            <i data-lucide="plus"></i> Add Filament
+                        </button>
+                        <div class="filament-total-row">
+                            <span>Total Filament Weight:</span>
+                            <strong id="prod-total-weight">0g</strong>
                         </div>
                     </div>
                     <div class="form-row">

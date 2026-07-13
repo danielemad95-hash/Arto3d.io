@@ -428,6 +428,7 @@ function openModal(modalId) {
         document.getElementById('product-id').value = '';
         document.getElementById('product-modal-title').textContent = 'Define Product Design';
         populateDropdowns();
+        resetFilamentRows();
         calculateProductCostsLive();
     } else if (modalId === 'manufacture-modal') {
         document.getElementById('manufacture-form').reset();
@@ -464,20 +465,31 @@ function getMaterialCostPerGram(material) {
     return weight > 0 ? (cost / weight) : 0;
 }
 
-// Perform complete manufacturing unit cost math for a product config
-function calculateProductCostMath(product, materialSpool) {
-    const costPerGram = getMaterialCostPerGram(materialSpool);
-    
-    const filamentWeight = parseFloat(product.weight) || 0;
+// Perform complete manufacturing unit cost math for a product config.
+// A product can use more than one filament (multi-color / multi-material prints):
+// product.filaments is an array of { materialId, weight } rows. Falls back to the
+// legacy single materialId/weight fields for older saved products.
+function calculateProductCostMath(product) {
+    const filaments = (product.filaments && product.filaments.length > 0)
+        ? product.filaments
+        : [{ materialId: product.materialId, weight: product.weight }];
+
+    let baseMaterialCost = 0;
+    let filamentWeight = 0;
+    filaments.forEach(f => {
+        const spool = state.materials.find(m => m.id === f.materialId);
+        const costPerGram = getMaterialCostPerGram(spool);
+        const w = parseFloat(f.weight) || 0;
+        baseMaterialCost += w * costPerGram;
+        filamentWeight += w;
+    });
+
     const printTime = parseFloat(product.printTime) || 0;
     const failureRate = parseFloat(product.failureRate) || 0;
     const laborTime = parseFloat(product.laborTime) || 0;
     const laborRate = parseFloat(product.laborRate) || 0;
     const electricityRate = parseFloat(product.electricityRate) || 0;
     const hardwareCost = parseFloat(product.hardwareCost) || 0;
-    
-    // 1. Filament Cost
-    const baseMaterialCost = filamentWeight * costPerGram;
     
     // 2. Electricity Cost: flat rate per hour of print time (default $1/hour)
     const baseElectricityCost = printTime * electricityRate;
@@ -503,8 +515,98 @@ function calculateProductCostMath(product, materialSpool) {
         failureCost: failureCushionCost,
         totalCost: totalUnitCost,
         profit: netProfit,
-        profitPercent: profitMarginPercent
+        profitPercent: profitMarginPercent,
+        totalWeight: filamentWeight
     };
+}
+
+
+// --- MULTI-FILAMENT PRODUCT ROWS ---
+// Each product can be made from more than one filament spool (e.g. a two-tone print).
+// These helpers build/manage the repeatable filament rows inside the product form.
+let filamentRowSeq = 0;
+
+function populateFilamentSelect(selectEl, selectedId) {
+    const prev = selectedId !== undefined ? selectedId : selectEl.value;
+    selectEl.innerHTML = '<option value="" disabled selected>Select a material spool</option>';
+    state.materials.forEach(mat => {
+        const opt = document.createElement('option');
+        opt.value = mat.id;
+        opt.textContent = `${mat.brand} - ${mat.type} (${mat.color})`;
+        selectEl.appendChild(opt);
+    });
+    if (prev && state.materials.some(m => m.id === prev)) {
+        selectEl.value = prev;
+    }
+}
+
+function addFilamentRow(materialId = '', weight = '') {
+    const list = document.getElementById('prod-filaments-list');
+    filamentRowSeq++;
+    const rowId = `fil-row-${filamentRowSeq}`;
+
+    const row = document.createElement('div');
+    row.className = 'filament-row';
+    row.dataset.rowId = rowId;
+    row.innerHTML = `
+        <div class="filament-row-select">
+            <select class="filament-material-select" required></select>
+        </div>
+        <div class="filament-row-weight">
+            <input type="number" class="filament-weight-input" min="0.1" step="0.1" placeholder="grams" value="${weight || ''}" required>
+        </div>
+        <button type="button" class="btn-remove-filament" onclick="removeFilamentRow('${rowId}')" title="Remove this filament">
+            <i data-lucide="x"></i>
+        </button>
+    `;
+    list.appendChild(row);
+
+    const selectEl = row.querySelector('.filament-material-select');
+    populateFilamentSelect(selectEl, materialId);
+
+    selectEl.addEventListener('change', calculateProductCostsLive);
+    row.querySelector('.filament-weight-input').addEventListener('input', calculateProductCostsLive);
+
+    updateRemoveFilamentButtons();
+    lucide.createIcons();
+    calculateProductCostsLive();
+}
+
+function removeFilamentRow(rowId) {
+    const list = document.getElementById('prod-filaments-list');
+    const row = list.querySelector(`[data-row-id="${rowId}"]`);
+    if (row) row.remove();
+    updateRemoveFilamentButtons();
+    calculateProductCostsLive();
+}
+
+// Keep at least one filament row on the form at all times
+function updateRemoveFilamentButtons() {
+    const list = document.getElementById('prod-filaments-list');
+    const rows = list.querySelectorAll('.filament-row');
+    rows.forEach(row => {
+        row.querySelector('.btn-remove-filament').disabled = rows.length <= 1;
+    });
+}
+
+// Rebuild the filament rows for a fresh form (new product) or an existing one (edit)
+function resetFilamentRows(filaments) {
+    const list = document.getElementById('prod-filaments-list');
+    list.innerHTML = '';
+    if (filaments && filaments.length > 0) {
+        filaments.forEach(f => addFilamentRow(f.materialId, f.weight));
+    } else {
+        addFilamentRow();
+    }
+}
+
+// Read the current filament rows out of the form
+function getFilamentRowsData() {
+    const list = document.getElementById('prod-filaments-list');
+    return Array.from(list.querySelectorAll('.filament-row')).map(row => ({
+        materialId: row.querySelector('.filament-material-select').value,
+        weight: parseFloat(row.querySelector('.filament-weight-input').value) || 0
+    }));
 }
 
 // Setup input listeners to recalculate product costs in real-time as the user types
@@ -525,7 +627,7 @@ function setupCalculators() {
     
     // 2. Product live cost fields listener
     const productInputs = [
-        'prod-target-price', 'prod-material-id', 'prod-weight', 'prod-print-time', 
+        'prod-target-price', 'prod-print-time', 
         'prod-failure-rate', 'prod-labor-time', 'prod-labor-rate', 
         'prod-electricity-rate', 'prod-hardware-cost'
     ];
@@ -570,12 +672,8 @@ function setupCalculators() {
 }
 
 function calculateProductCostsLive() {
-    const matSelect = document.getElementById('prod-material-id');
-    const selectedMatId = matSelect.value;
-    const materialSpool = state.materials.find(m => m.id === selectedMatId);
-
     const tempProduct = {
-        weight: document.getElementById('prod-weight').value,
+        filaments: getFilamentRowsData(),
         printTime: document.getElementById('prod-print-time').value,
         failureRate: document.getElementById('prod-failure-rate').value,
         laborTime: document.getElementById('prod-labor-time').value,
@@ -585,7 +683,11 @@ function calculateProductCostsLive() {
         targetPrice: document.getElementById('prod-target-price').value
     };
 
-    const math = calculateProductCostMath(tempProduct, materialSpool);
+    const math = calculateProductCostMath(tempProduct);
+
+    // Total filament weight readout
+    const totalWeightEl = document.getElementById('prod-total-weight');
+    if (totalWeightEl) totalWeightEl.textContent = `${math.totalWeight}g`;
 
     // Render results in modal Live Box
     document.getElementById('sum-material-cost').textContent = `$${math.materialCost.toFixed(2)}`;
@@ -633,20 +735,17 @@ function recalculateProductStocks() {
 // Recalculate costs for all catalog items when spools change
 function recalculateAllProductsCost() {
     state.products.forEach(async (product) => {
-        const spool = state.materials.find(m => m.id === product.materialId);
-        if (spool) {
-            const math = calculateProductCostMath(product, spool);
-            const unitCost = parseFloat(math.totalCost.toFixed(2));
-            const profit = parseFloat(math.profit.toFixed(2));
-            const profitPercent = parseFloat(math.profitPercent.toFixed(1));
-            
-            // If the values changed in memory, update DB
-            if (product.unitCost !== unitCost || product.profit !== profit || product.profitPercent !== profitPercent) {
-                product.unitCost = unitCost;
-                product.profit = profit;
-                product.profitPercent = profitPercent;
-                await dbUpdate('products', product.id, { unitCost, profit, profitPercent }, 'products');
-            }
+        const math = calculateProductCostMath(product);
+        const unitCost = parseFloat(math.totalCost.toFixed(2));
+        const profit = parseFloat(math.profit.toFixed(2));
+        const profitPercent = parseFloat(math.profitPercent.toFixed(1));
+        
+        // If the values changed in memory, update DB
+        if (product.unitCost !== unitCost || product.profit !== profit || product.profitPercent !== profitPercent) {
+            product.unitCost = unitCost;
+            product.profit = profit;
+            product.profitPercent = profitPercent;
+            await dbUpdate('products', product.id, { unitCost, profit, profitPercent }, 'products');
         }
     });
 }
@@ -694,16 +793,23 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
         return;
     }
 
-    const selectedMatId = document.getElementById('prod-material-id').value;
-    const materialSpool = state.materials.find(m => m.id === selectedMatId);
+    // Gather every filament row (a product can be made of more than one spool/color)
+    const filaments = getFilamentRowsData();
+    const hasInvalidRow = filaments.length === 0 || filaments.some(f => !f.materialId || f.weight <= 0);
+    if (hasInvalidRow) {
+        alert("Please select a material spool and enter a weight (in grams) for every filament row.");
+        return;
+    }
 
     const productInput = {
         code: prodCode,
         name: document.getElementById('prod-name').value,
         targetPrice: parseFloat(document.getElementById('prod-target-price').value) || 0,
         desc: document.getElementById('prod-desc').value,
-        materialId: selectedMatId,
-        weight: parseFloat(document.getElementById('prod-weight').value) || 0,
+        filaments: filaments,
+        // Kept for backward compatibility with older records/views: primary spool + total weight
+        materialId: filaments[0].materialId,
+        weight: filaments.reduce((sum, f) => sum + f.weight, 0),
         printTime: parseFloat(document.getElementById('prod-print-time').value) || 0,
         failureRate: parseFloat(document.getElementById('prod-failure-rate').value) || 0,
         laborTime: parseFloat(document.getElementById('prod-labor-time').value) || 0,
@@ -713,7 +819,7 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
     };
 
     // Calculate final metrics for storage
-    const math = calculateProductCostMath(productInput, materialSpool);
+    const math = calculateProductCostMath(productInput);
     productInput.unitCost = parseFloat(math.totalCost.toFixed(2));
     productInput.profit = parseFloat(math.profit.toFixed(2));
     productInput.profitPercent = parseFloat(math.profitPercent.toFixed(1));
@@ -744,11 +850,9 @@ document.getElementById('manufacture-form').addEventListener('submit', async (e)
     const product = state.products.find(p => p.id === prodId);
     if (!product) return;
 
-    // Calculate wasted or utilized material cost for this print run
-    const materialSpool = state.materials.find(m => m.id === product.materialId);
-    const costPerGram = getMaterialCostPerGram(materialSpool);
-    const printCostPerUnit = (parseFloat(product.weight) * costPerGram) + 
-                            (parseFloat(product.printTime) * (parseFloat(product.electricityRate) || 0));
+    // Calculate wasted or utilized material cost for this print run (sums across all filaments used)
+    const math = calculateProductCostMath(product);
+    const printCostPerUnit = math.materialCost + math.electricityCost;
     const totalRunCost = parseFloat((printCostPerUnit * qty).toFixed(2));
 
     const runData = {
@@ -855,21 +959,10 @@ document.getElementById('btn-disconnect-firebase').addEventListener('click', () 
 
 // --- DROPDOWN POPULATOR ---
 function populateDropdowns() {
-    // 1. Product configuration spool dropdown
-    const matSelect = document.getElementById('prod-material-id');
-    const previousMatVal = matSelect.value;
-    
-    matSelect.innerHTML = '<option value="" disabled selected>Select a material spool</option>';
-    state.materials.forEach(mat => {
-        const opt = document.createElement('option');
-        opt.value = mat.id;
-        opt.textContent = `${mat.brand} - ${mat.type} (${mat.color})`;
-        matSelect.appendChild(opt);
+    // 1. Product configuration spool dropdowns (one per filament row already on the form)
+    document.querySelectorAll('.filament-material-select').forEach(sel => {
+        populateFilamentSelect(sel);
     });
-    
-    if (previousMatVal && state.materials.some(m => m.id === previousMatVal)) {
-        matSelect.value = previousMatVal;
-    }
 
     // 2. Manufacturing run product selection
     const mfgSelect = document.getElementById('mfg-product-id');
@@ -938,11 +1031,12 @@ function editProduct(id) {
     document.getElementById('prod-target-price').value = prod.targetPrice;
     document.getElementById('prod-desc').value = prod.desc || '';
     
-    // Set material selection
-    populateDropdowns();
-    document.getElementById('prod-material-id').value = prod.materialId;
+    // Set filament selections (falls back to legacy single materialId/weight if no filaments array saved)
+    const filaments = (prod.filaments && prod.filaments.length > 0)
+        ? prod.filaments
+        : [{ materialId: prod.materialId, weight: prod.weight }];
+    resetFilamentRows(filaments);
     
-    document.getElementById('prod-weight').value = prod.weight;
     document.getElementById('prod-print-time').value = prod.printTime;
     document.getElementById('prod-failure-rate').value = prod.failureRate !== undefined ? prod.failureRate : 10;
     document.getElementById('prod-labor-time').value = prod.laborTime !== undefined ? prod.laborTime : 0.2;
@@ -1560,8 +1654,14 @@ function renderProducts() {
         if (filters.products.stock !== 'all' && filters.products.stock !== stockCategory) return false;
 
         if (filters.products.material !== 'all') {
-            const spool = state.materials.find(m => m.id === prod.materialId);
-            if (!spool || spool.type !== filters.products.material) return false;
+            const filaments = (prod.filaments && prod.filaments.length > 0)
+                ? prod.filaments
+                : [{ materialId: prod.materialId }];
+            const usesMaterial = filaments.some(f => {
+                const spool = state.materials.find(m => m.id === f.materialId);
+                return spool && spool.type === filters.products.material;
+            });
+            if (!usesMaterial) return false;
         }
 
         if (filters.products.search) {
@@ -1585,10 +1685,19 @@ function renderProducts() {
     }
 
     listEl.innerHTML = filtered.map(prod => {
-        const spool = state.materials.find(m => m.id === prod.materialId);
-        const spoolColor = spool ? spool.color : 'N/A';
-        const spoolHex = spool ? spool.colorHex : '#94a3b8';
-        const spoolType = spool ? spool.type : 'N/A';
+        const filaments = (prod.filaments && prod.filaments.length > 0)
+            ? prod.filaments
+            : [{ materialId: prod.materialId, weight: prod.weight }];
+        const spools = filaments.map(f => state.materials.find(m => m.id === f.materialId));
+
+        const colorBadgesHtml = spools.length > 0
+            ? spools.map(spool => `
+                <div class="color-badge">
+                    <span class="color-dot" style="background-color: ${spool ? (spool.colorHex || '#94a3b8') : '#94a3b8'};"></span>
+                    <span>${spool ? spool.color : 'N/A'}${spools.length === 1 ? ` (${spool ? spool.type : 'N/A'})` : ''}</span>
+                </div>
+              `).join('')
+            : `<div class="color-badge"><span class="color-dot" style="background-color: #94a3b8;"></span><span>N/A</span></div>`;
 
         // Stock Badge Class
         const stock = prod.stock || 0;
@@ -1610,11 +1719,8 @@ function renderProducts() {
                         <span style="font-size: 11px; font-weight: 800; color: var(--primary); display: block; letter-spacing: 0.5px;">${prod.code || 'N/A'}</span>
                         ${prod.name}
                     </div>
-                    <div class="card-subtitle">
-                        <div class="color-badge">
-                            <span class="color-dot" style="background-color: ${spoolHex};"></span>
-                            <span>${spoolColor} (${spoolType})</span>
-                        </div>
+                    <div class="card-subtitle multi-filament-badges">
+                        ${colorBadgesHtml}
                     </div>
                     <div class="card-actions-dropdown">
                         <button class="btn-card-action" onclick="editProduct('${prod.id}')"><i data-lucide="edit-3"></i></button>
@@ -1628,7 +1734,7 @@ function renderProducts() {
                     </div>
                     <div class="spec-row">
                         <span class="spec-label">Filament Wt:</span>
-                        <span class="spec-val">${prod.weight}g</span>
+                        <span class="spec-val">${prod.weight}g${filaments.length > 1 ? ` (${filaments.length} filaments)` : ''}</span>
                     </div>
                     <div class="spec-row">
                         <span class="spec-label">Production Cost:</span>

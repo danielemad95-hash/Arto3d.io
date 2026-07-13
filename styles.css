@@ -1073,6 +1073,113 @@ textarea:focus {
     box-shadow: 0 0 10px var(--primary-glow);
 }
 
+/* Fix native dropdown list rendering white-on-white in some browsers:
+   the closed <select> picks up our dark theme, but the open option list
+   uses the OS's light popup by default unless we opt into dark rendering. */
+select {
+    color-scheme: dark;
+}
+
+select option {
+    background-color: var(--bg-surface-opaque);
+    color: var(--text-primary);
+}
+
+/* --- Multi-Filament Rows (Product Config) --- */
+.filaments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.filament-row {
+    display: grid;
+    grid-template-columns: 1fr 120px auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.filament-row select,
+.filament-row input {
+    margin: 0;
+}
+
+.btn-remove-filament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.btn-remove-filament:hover:not(:disabled) {
+    background: var(--danger-glow);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.btn-remove-filament:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.btn-remove-filament svg {
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+}
+
+.btn-add-filament {
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.btn-add-filament svg {
+    width: 14px;
+    height: 14px;
+}
+
+.filament-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.filament-total-row strong {
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.multi-filament-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+}
+
+@media (max-width: 640px) {
+    .filament-row {
+        grid-template-columns: 1fr 85px auto;
+    }
+}
+
 .input-hint {
     font-size: 11px;
     color: var(--text-muted);

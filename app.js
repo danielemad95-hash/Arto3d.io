@@ -11,7 +11,7 @@ let state = {
 // UI-only filter selections for each section (never persisted, just drives what's rendered)
 let filters = {
     materials: { type: 'all', search: '' },
-    products: { stock: 'all', material: 'all', search: '' },
+    products: { stock: 'all', material: 'all', search: '', sort: 'code-asc' },
     manufacturing: { status: 'all', product: 'all', month: 'all' },
     sales: { channel: 'all', product: 'all', month: 'all' }
 };
@@ -1038,9 +1038,9 @@ function editProduct(id) {
     resetFilamentRows(filaments);
     
     document.getElementById('prod-print-time').value = prod.printTime;
-    document.getElementById('prod-failure-rate').value = prod.failureRate !== undefined ? prod.failureRate : 10;
+    document.getElementById('prod-failure-rate').value = prod.failureRate !== undefined ? prod.failureRate : 0;
     document.getElementById('prod-labor-time').value = prod.laborTime !== undefined ? prod.laborTime : 0.2;
-    document.getElementById('prod-labor-rate').value = prod.laborRate !== undefined ? prod.laborRate : 15.00;
+    document.getElementById('prod-labor-rate').value = prod.laborRate !== undefined ? prod.laborRate : 5.00;
     document.getElementById('prod-electricity-rate').value = prod.electricityRate !== undefined ? prod.electricityRate : 1.00;
     document.getElementById('prod-hardware-cost').value = prod.hardwareCost !== undefined ? prod.hardwareCost : 0.00;
 
@@ -1684,7 +1684,18 @@ function renderProducts() {
         return;
     }
 
-    listEl.innerHTML = filtered.map(prod => {
+    const sortMode = filters.products.sort || 'code-asc';
+    const sorted = [...filtered];
+    if (sortMode === 'code-asc' || sortMode === 'code-desc') {
+        sorted.sort((a, b) => {
+            const codeA = (a.code || '').toString();
+            const codeB = (b.code || '').toString();
+            const cmp = codeA.localeCompare(codeB, undefined, { numeric: true, sensitivity: 'base' });
+            return sortMode === 'code-asc' ? cmp : -cmp;
+        });
+    }
+
+    listEl.innerHTML = sorted.map(prod => {
         const filaments = (prod.filaments && prod.filaments.length > 0)
             ? prod.filaments
             : [{ materialId: prod.materialId, weight: prod.weight }];

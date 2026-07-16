@@ -964,10 +964,15 @@ function populateDropdowns() {
         populateFilamentSelect(sel);
     });
 
+    // Product list sorted by code for dropdowns (natural sort, e.g. P2 before P10)
+    const productsByCode = [...state.products].sort((a, b) =>
+        (a.code || '').toString().localeCompare((b.code || '').toString(), undefined, { numeric: true, sensitivity: 'base' })
+    );
+
     // 2. Manufacturing run product selection
     const mfgSelect = document.getElementById('mfg-product-id');
     mfgSelect.innerHTML = '<option value="" disabled selected>Select a product to print</option>';
-    state.products.forEach(prod => {
+    productsByCode.forEach(prod => {
         const opt = document.createElement('option');
         opt.value = prod.id;
         opt.textContent = `[${prod.code || 'N/A'}] ${prod.name}`;
@@ -977,7 +982,7 @@ function populateDropdowns() {
     // 3. Sales transaction product selection
     const saleSelect = document.getElementById('sale-product-id');
     saleSelect.innerHTML = '<option value="" disabled selected>Select product sold</option>';
-    state.products.forEach(prod => {
+    productsByCode.forEach(prod => {
         const opt = document.createElement('option');
         opt.value = prod.id;
         opt.textContent = `[${prod.code || 'N/A'}] ${prod.name} (Stock: ${prod.stock || 0})`;

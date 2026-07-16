@@ -144,6 +144,16 @@
                                 <i data-lucide="package"></i>
                             </div>
                         </div>
+                        <div class="kpi-card stock-value-card">
+                            <div class="kpi-info">
+                                <span class="kpi-label">Stock Value</span>
+                                <h3 id="kpi-stock-value" class="kpi-value">$0.00</h3>
+                                <span class="kpi-subtext" id="kpi-stock-value-sub">At selling price</span>
+                            </div>
+                            <div class="kpi-icon-wrapper">
+                                <i data-lucide="warehouse"></i>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Monthly Report Card -->
@@ -305,9 +315,15 @@
                             <h2>Product Catalog</h2>
                             <p>Define product designs. Input print parameters like print times, filament weights, labor, and failure margins to estimate unit costs and profit margins.</p>
                         </div>
-                        <button class="btn btn-primary" onclick="openModal('product-modal')">
-                            <i data-lucide="plus"></i> Add Product
-                        </button>
+                        <div style="display:flex; align-items:center; gap: 12px;">
+                            <div class="stock-value-badge" style="text-align:right;">
+                                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">Total Stock Value</div>
+                                <div id="products-total-stock-value" style="font-size: 20px; font-weight: 700; color: var(--success);">$0.00</div>
+                            </div>
+                            <button class="btn btn-primary" onclick="openModal('product-modal')">
+                                <i data-lucide="plus"></i> Add Product
+                            </button>
+                        </div>
                     </div>
                     <div class="filter-bar">
                         <div class="filter-group">

@@ -1121,8 +1121,11 @@ function renderDashboard() {
     const margin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
     
     let activeStockCount = 0;
+    let totalStockValue = 0;
     state.products.forEach(p => {
-        activeStockCount += p.stock || 0;
+        const stock = p.stock || 0;
+        activeStockCount += stock;
+        totalStockValue += stock * (parseFloat(p.targetPrice) || 0);
     });
 
     // Populate UI KPI Cards
@@ -1143,6 +1146,8 @@ function renderDashboard() {
     
     document.getElementById('kpi-stock').textContent = activeStockCount;
     document.getElementById('kpi-items-types').textContent = `${state.products.length} catalog designs`;
+
+    document.getElementById('kpi-stock-value').textContent = `$${totalStockValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
     // Render Alerts / Low Stock Warnings
     renderInventoryAlerts();
@@ -1677,6 +1682,13 @@ function renderProducts() {
 
         return true;
     });
+
+    // Total stock value (at selling price) for the currently filtered products
+    const totalStockValueEl = document.getElementById('products-total-stock-value');
+    if (totalStockValueEl) {
+        const totalStockValue = filtered.reduce((sum, p) => sum + (p.stock || 0) * (parseFloat(p.targetPrice) || 0), 0);
+        totalStockValueEl.textContent = `$${totalStockValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
 
     if (filtered.length === 0) {
         listEl.innerHTML = `
